@@ -1,3 +1,6 @@
+import os
+os.environ["STREAMLIT_RUNTIME_HOME"] = "/data/.streamlit"
+os.environ["STREAMLIT_CONFIG_FILE"] = "/data/.streamlit/config.toml"
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -43,4 +46,5 @@ st.download_button(
     data=excel_file,
     file_name="data_ph_debit.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
 )
