@@ -127,6 +127,45 @@ try:
         st.info("Belum ada data untuk lokasi ini.")
     else:
         st.dataframe(df_preview.sort_values(["tahun","bulan","tanggal"]).reset_index(drop=True))
+        # ----------------------------
+# Hapus data berdasarkan tanggal dengan konfirmasi
+# ----------------------------
+st.markdown("### ❌ Hapus data berdasarkan tanggal")
+
+# Tampilkan pilihan tanggal dari data yang ada
+if not df_preview.empty:
+    # Ambil tanggal unik dari kolom tanggal
+    tanggal_unik = pd.to_datetime(df_preview["tanggal"], errors="coerce").dropna().dt.date.unique()
+
+    if len(tanggal_unik) > 0:
+        tanggal_hapus = st.selectbox("Pilih tanggal yang ingin dihapus:", sorted(tanggal_unik))
+
+        # Buat key unik untuk tombol berdasarkan tanggal dan lokasi
+        tombol_konfirmasi_key = f"konfirmasi_hapus_{tanggal_hapus}_{lokasi}"
+
+        # Tahap 1: Tombol awal untuk menandai akan hapus
+        if st.button("Tandai untuk Dihapus"):
+            st.warning(f"⚠ Anda memilih untuk menghapus data tanggal {tanggal_hapus} dari lokasi '{lokasi}'.")
+            st.session_state[tombol_konfirmasi_key] = True
+
+        # Tahap 2: Jika sudah ditandai, munculkan tombol konfirmasi
+        if st.session_state.get(tombol_konfirmasi_key, False):
+            if st.button("✅ Konfirmasi Hapus Sekarang"):
+                # Hapus data yang sesuai
+                df_filtered = df_preview[pd.to_datetime(df_preview["tanggal"]).dt.date != tanggal_hapus]
+
+                # Simpan ulang
+                all_sheets[lokasi] = df_filtered
+                save_all_sheets(all_sheets, EXCEL_PATH)
+
+                # Reset status
+                st.session_state[tombol_konfirmasi_key] = False
+
+                st.success(f"✅ Data tanggal {tanggal_hapus} dari lokasi '{lokasi}' telah dihapus.")
+    else:
+        st.info("Tidak ada tanggal valid untuk dihapus.")
+else:
+    st.info("Tidak ada data untuk dihapus.")
 except Exception as e:
     st.error(f"Gagal membaca file Excel: {e}")
 
@@ -146,4 +185,5 @@ st.download_button(
 )
 
 st.info("File disimpan di server sebagai ph_debit_data.xlsx. Data akan bertahan kecuali file dihapus dari server.")
+
 
