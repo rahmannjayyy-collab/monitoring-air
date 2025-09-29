@@ -37,12 +37,29 @@ def read_all_sheets(path: Path):
     return pd.read_excel(path, sheet_name=None, engine="openpyxl")
 
 def save_all_sheets(dfs: dict, path: Path):
-    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+    with pd.ExcelWriter(path, engine="xlsxwriter", datetime_format="yyyy-mm-dd") as writer:  # <-- ganti engine
         for sheet, df in dfs.items():
             # pastikan kolom urut sesuai COLUMNS
             df = df.reindex(columns=COLUMNS)
+
+            # Tambahkan kolom tanggal lengkap
+            df["tanggal_lengkap"] = pd.to_datetime(dict(year=df["tahun"], month=df["bulan"], day=df["tanggal"]), errors='coerce')  # <-- ditambahkan
+
+            # Tulis ke Excel
             df.to_excel(writer, sheet_name=sheet, index=False)
 
+            # Format tampilan kolom di Excel
+            workbook = writer.book
+            worksheet = writer.sheets[sheet]
+
+            # Atur lebar kolom agar rapi dan tanggal terlihat
+            worksheet.set_column("A:A", 6)   # tanggal
+            worksheet.set_column("B:B", 6)   # bulan
+            worksheet.set_column("C:C", 8)   # tahun
+            worksheet.set_column("D:D", 10)  # pH
+            worksheet.set_column("E:E", 10)  # debit
+            worksheet.set_column("F:F", 18)  # ph_rata_rata_bulan
+            worksheet.set_column("G:G", 15, workbook.add_format({'num_format': 'yyyy-mm-dd'}))  # tanggal_lengkap
 # ----------------------------
 # Form input
 # ----------------------------
@@ -129,3 +146,4 @@ st.download_button(
 )
 
 st.info("File disimpan di server sebagai ph_debit_data.xlsx. Data akan bertahan kecuali file dihapus dari server.")
+
